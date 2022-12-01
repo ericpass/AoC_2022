@@ -51,4 +51,5 @@ input.forEach((elf) => {
   }
 });
 
+// Answer
 console.log(max);

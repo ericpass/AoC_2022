@@ -25,6 +25,7 @@ input.forEach((elf) => {
   }
 });
 
+// Answer
 console.log(
   calorieCounts
     .sort((a, b) => b - a)
