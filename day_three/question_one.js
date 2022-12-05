@@ -57,5 +57,5 @@ input.forEach((rucksack) => {
   }
 });
 
-// Answer
+// Answer: 7691
 console.log(totalSum);
