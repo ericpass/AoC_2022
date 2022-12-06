@@ -35,8 +35,8 @@ const input = fs.readFileSync('./input.txt').toString().split('');
 
 // Create set from slice; if size of set === desired packet window, all must be unique
 for (let i = 3; i < input.length; i++) {
-  const chars = new Set(...[input.slice(i - 4, i)]);
-  if (chars.size === 4) {
+  const packetWindow = new Set(...[input.slice(i - 4, i)]);
+  if (packetWindow.size === 4) {
     console.log(i);
     break;
   }
