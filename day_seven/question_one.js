@@ -85,9 +85,7 @@ const testInput =
 
 const dirTree = new Map();
 const cdCommand = '$ cd';
-const lsCommand = '$ ls';
 const dirCommand = 'dir';
-let parentDir = '';
 let currentDir = '';
 let dirStack = new Array();
 
@@ -97,12 +95,9 @@ let dirStack = new Array();
 const parseCommand = (command) => {
   if (command.indexOf(cdCommand) !== -1) {
     const targetDir = command.split(' ')[2];
-
-    if (targetDir === '/') {
-      dirStack.push(targetDir);
-    } else if (targetDir === '..') {
+    if (targetDir === '..') {
       dirStack.pop();
-    } else {
+    } else if (targetDir !== '/') {
       dirStack.push(targetDir);
     }
 
@@ -110,21 +105,29 @@ const parseCommand = (command) => {
   }
 
   if (command.indexOf(dirCommand) !== -1) {
-    if (!dirTree.has(command.split(' ')[1])) {
-      dirTree.set(command.split(' ')[1], '');
-    }
-  } else {
-    if (Number.isInteger(Number(command.split(' ')[0]))) {
-      let size = Number(command.split(' ')[0]);
-
-      // Adjust to account for currDir
-      if (dirTree.has('sum')) {
-        let currTotal = dirTree.get('sum');
-        dirTree.set('sum', currTotal + size);
-      } else {
-        dirTree.set('sum', size);
+    if (dirStack.length > 0) {
+      const dir = new Map();
+      dirTree.set(currentDir, dir);
+      dirTree.set('sum', 0);
+      dir.set(command.split(' ')[1], new Map());
+    } else {
+      if (!dirTree.has(command.split(' ')[1])) {
+        dirTree.set(command.split(' ')[1], new Map());
       }
     }
+    // } else {
+    //   if (Number.isInteger(Number(command.split(' ')[0]))) {
+    //     let size = Number(command.split(' ')[0]);
+
+    //     // Adjust to account for currDir
+    //     if (dirTree.get(command.split(' ')[0]) && dirTree.has('sum')) {
+    //       let currTotal = dirTree.get('sum');
+    //       dirTree.set('sum', currTotal + size);
+    //     } else {
+    //       dirTree.set('sum', size);
+    //     }
+    //   }
+    // }
   }
 };
 
@@ -134,3 +137,5 @@ testInput.forEach((item) => {
 });
 
 console.log(dirTree);
+// console.log(dirStack);
+// console.log(currentDir);
