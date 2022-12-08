@@ -60,6 +60,7 @@ Given the commands and output in the example above, you can determine that the f
     - d.log (file, size=8033020)
     - d.ext (file, size=5626152)
     - k (file, size=7214296)
+
 Here, there are four directories: / (the outermost directory), a and d (which are in /), and e (which is in a). These directories also contain files of various sizes.
 
 Since the disk is full, your first step should probably be to find directories that are good candidates for deletion. To do this, you need to determine the total size of each directory. The total size of a directory is the sum of the sizes of the files it contains, directly or indirectly. (Directories themselves do not count as having any intrinsic size.)
@@ -78,63 +79,97 @@ Find all of the directories with a total size of at most 100000. What is the sum
 const fs = require('fs');
 const input = fs.readFileSync('./input.txt').toString().split('\n');
 
-const testInput =
-  '$ cd /\n$ ls\ndir fts\ndir jnwr\ndir lrvl\ndir nzgprvw\ndir snwqjgj\n16394 tllvcdr.sjl\n195891 zbdp.gqb\ndir zddrb\n$ cd fts\n$ ls\ndir dlqtffw\n$ cd dlqtffw\n$ ls\n73533 nqbvg.fgd\n$ cd ..'.split(
-    '\n'
-  );
+// const testInput =
+//   '$ cd /\n$ ls\ndir fts\ndir jnwr\ndir lrvl\ndir nzgprvw\ndir snwqjgj\n16394 tllvcdr.sjl\n195891 zbdp.gqb\ndir zddrb\n$ cd fts\n$ ls\ndir dlqtffw\n$ cd dlqtffw\n$ ls\n73533 nqbvg.fgd\n$ cd ..'.split(
+//     '\n'
+//   );
+
+const testInput = '$ cd /\ndir a\n$ cd a\ndir e\n$ cd e\n584 i.txt\n$ cd ..\n29116 f.txt\n2557 g.txt\n62596 h.txt\n$ cd ..\n14848514 b.txt\n8504156 c.txt\ndir d\n$ cd d\n4060174 j.txt\n8033020 d.log\n5626152 d.ext\n7214296 k.txt'.split('\n');
 
 const dirTree = new Map();
+dirTree.set('/', { children: [], sum: 0 });
 const cdCommand = '$ cd';
 const dirCommand = 'dir';
-let currentDir = '';
-let dirStack = new Array();
+const MAX_SIZE = 100000;
+let result = 0;
+let currentDir = ['/'];
+let dirStack = ['/'];
 
-// test.set('a', { a: [1, 2, 3], b: 1 });
-
-// Use recursion and search each node full depth to check current dir sum vs 100k and return that sum
+// Parse input and build the tree
 const parseCommand = (command) => {
+  // Parse cd commands
   if (command.indexOf(cdCommand) !== -1) {
+    // console.log(`Command: ${command}`);
     const targetDir = command.split(' ')[2];
     if (targetDir === '..') {
       dirStack.pop();
+      // console.log('Going back!')
     } else if (targetDir !== '/') {
       dirStack.push(targetDir);
+      dirTree.set(targetDir, { children: [], sum: 0 });
+      // console.log(`Going to: ${targetDir}`);
     }
 
     currentDir = dirStack[dirStack.length - 1];
+    // console.log(`Current dir: ${currentDir}`)
   }
 
   if (command.indexOf(dirCommand) !== -1) {
-    if (dirStack.length > 0) {
-      const dir = new Map();
-      dirTree.set(currentDir, dir);
-      dirTree.set('sum', 0);
-      dir.set(command.split(' ')[1], new Map());
+    const currDir = dirTree.get(currentDir);
+    if (currDir) {
+      currDir?.children.push(command.split(' ')[1]);
+      dirTree.set(currentDir, currDir);
     } else {
-      if (!dirTree.has(command.split(' ')[1])) {
-        dirTree.set(command.split(' ')[1], new Map());
-      }
+      dirTree.set(currentDir, { children: [command.split(' ')[1]], sum: 0 })
     }
-    // } else {
-    //   if (Number.isInteger(Number(command.split(' ')[0]))) {
-    //     let size = Number(command.split(' ')[0]);
-
-    //     // Adjust to account for currDir
-    //     if (dirTree.get(command.split(' ')[0]) && dirTree.has('sum')) {
-    //       let currTotal = dirTree.get('sum');
-    //       dirTree.set('sum', currTotal + size);
-    //     } else {
-    //       dirTree.set('sum', size);
-    //     }
-    //   }
-    // }
   }
+
+  if (Number.isInteger(Number(command.split(' ')[0]))) {
+    const data = dirTree.get(currentDir);
+    const sum = data.sum + Number(command.split(' ')[0]);
+    dirTree.set(currentDir, { ...data, sum });
+  }
+};
+
+// let arr = [1, 2, 3, 4, 5, 6] 
+
+// function add(arr) {
+//     if (arr.length == 1) return arr[0] // base case
+//     return arr[0] + add(arr.slice(1))  // recurse
+// }
+
+const sumChildren = (tree, child) => {
+  const data = tree.get(child);
+  console.log(data);
+
+  if (data.children.length === 0) return data.sum;
+
+  data.children.forEach((subChild) => {
+    return data.sum + sumChildren(tree, subChild);
+  });
+}
+
+// Search the tree
+const searchForTarget = (tree) => {
+  for (const [key, value] of tree) {
+    if (value.children.length > 0 && value.sum < MAX_SIZE) {
+      value.children.forEach((item) => {
+        result += sumChildren(tree, item);
+      });
+    } else if (value.sum < MAX_SIZE) {
+      result += value.sum;
+    }
+  }
+
+  console.log(result);
 };
 
 testInput.forEach((item) => {
   // console.log(item);
   parseCommand(item);
 });
+
+searchForTarget(dirTree);
 
 console.log(dirTree);
 // console.log(dirStack);
